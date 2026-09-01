@@ -1,0 +1,28 @@
+:root {
+  --navy: #12194a;
+  --navy-2: #1b2568;
+  --gold: #c9a24b;
+  --paper: #f6f4ee;
+  --ink: #1c1c1c;
+  --muted: #6b6b6b;
+  --line: #dedad0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+}
