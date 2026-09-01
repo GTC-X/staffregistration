@@ -1,13 +1,11 @@
 import { connectToDatabase } from "@/lib/mongodb";
-import Staff from "@/models/Staff";
+import { findStaffByQrOrId } from "@/lib/find-staff";
 import PublicCardView from "@/components/PublicCardView";
 import { notFound } from "next/navigation";
 
 export default async function PublicCardPage({ params }: { params: { id: string } }) {
   await connectToDatabase();
-  const staff = await Staff.findOne({
-    $or: [{ qrId: params.id }, { _id: params.id }]
-  }).lean<any>();
+  const staff = await findStaffByQrOrId(params.id);
 
   if (!staff) notFound();
 
