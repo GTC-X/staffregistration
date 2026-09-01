@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
+function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,45 +35,53 @@ export default function LoginPage() {
   }
 
   return (
+    <form onSubmit={handleSubmit}>
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Admin password"
+        style={{
+          width: "100%",
+          padding: "10px 12px",
+          fontSize: 14,
+          border: "1px solid #ccc",
+          borderRadius: 6,
+          marginBottom: 10
+        }}
+      />
+      {error && <p style={{ color: "#b23b3b", fontSize: 13, marginBottom: 10 }}>{error}</p>}
+      <button
+        type="submit"
+        disabled={loading}
+        style={{
+          width: "100%",
+          padding: "10px 12px",
+          fontSize: 14,
+          fontWeight: 600,
+          color: "#fff",
+          background: "#12194a",
+          border: "none",
+          borderRadius: 6,
+          cursor: loading ? "not-allowed" : "pointer"
+        }}
+      >
+        {loading ? "Checking..." : "Log in"}
+      </button>
+    </form>
+  );
+}
+
+export default function LoginPage() {
+  return (
     <div style={{ maxWidth: 360, margin: "80px auto", fontFamily: "sans-serif" }}>
       <h1 style={{ fontSize: 20, marginBottom: 4 }}>Staff portal</h1>
       <p style={{ color: "#666", fontSize: 14, marginBottom: 24 }}>
         Internal access only. Enter the admin password to continue.
       </p>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Admin password"
-          style={{
-            width: "100%",
-            padding: "10px 12px",
-            fontSize: 14,
-            border: "1px solid #ccc",
-            borderRadius: 6,
-            marginBottom: 10
-          }}
-        />
-        {error && <p style={{ color: "#b23b3b", fontSize: 13, marginBottom: 10 }}>{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            width: "100%",
-            padding: "10px 12px",
-            fontSize: 14,
-            fontWeight: 600,
-            color: "#fff",
-            background: "#12194a",
-            border: "none",
-            borderRadius: 6,
-            cursor: loading ? "not-allowed" : "pointer"
-          }}
-        >
-          {loading ? "Checking..." : "Log in"}
-        </button>
-      </form>
+      <Suspense fallback={<p style={{ fontSize: 14, color: "#666" }}>Loading...</p>}>
+        <LoginForm />
+      </Suspense>
     </div>
   );
 }
