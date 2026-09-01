@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import QrCodeImage from "@/components/QrCodeImage";
-import { getCardUrl } from "@/lib/card-url";
+import { getCardUrl, getQrUrl, getVcardUrl } from "@/lib/card-url";
 import { downloadQrPng } from "@/lib/qr";
 
 type Staff = {
@@ -29,14 +29,14 @@ export default function QrCodesPage() {
   }, []);
 
   async function copyLink(person: Staff) {
-    const url = getCardUrl(person);
+    const url = getVcardUrl(person);
     await navigator.clipboard.writeText(url);
     setCopiedId(person._id);
     setTimeout(() => setCopiedId(null), 2000);
   }
 
   async function handleDownload(person: Staff) {
-    const url = getCardUrl(person);
+    const url = getQrUrl(person);
     const safeName = person.name.replace(/[^\w\-]+/g, "-").toLowerCase();
     await downloadQrPng(url, `${safeName}-qr.png`);
   }
@@ -47,7 +47,7 @@ export default function QrCodesPage() {
         <div>
           <h1 className="qr-title">QR codes</h1>
           <p className="qr-subtitle">
-            Each employee gets a unique QR code. Scanning it opens their digital business profile.
+            Each employee gets a unique QR code. Scanning it opens the phone&apos;s add-to-contacts screen with name and number filled in.
             Editing name or contact details does not change the QR code.
           </p>
         </div>
@@ -64,6 +64,7 @@ export default function QrCodesPage() {
         <div className="qr-grid">
           {staff.map((s) => {
             const cardUrl = getCardUrl(s);
+            const contactUrl = getQrUrl(s);
             const subtitle = [s.title, s.company].filter(Boolean).join(" · ");
 
             return (
@@ -72,7 +73,7 @@ export default function QrCodesPage() {
 
                 <div className="qr-card-body">
                   <div className="qr-frame">
-                    <QrCodeImage url={cardUrl} size={160} alt={`QR code for ${s.name}`} />
+                    <QrCodeImage url={contactUrl} size={160} alt={`QR code for ${s.name}`} />
                   </div>
 
                   <div className="qr-info">
@@ -81,9 +82,9 @@ export default function QrCodesPage() {
                   </div>
 
                   <div className="qr-link-row">
-                    <span className="qr-link-label">Profile link</span>
-                    <a href={cardUrl} target="_blank" rel="noopener noreferrer" className="qr-link-url" title={cardUrl}>
-                      {cardUrl.replace(/^https?:\/\//, "")}
+                    <span className="qr-link-label">Save contact link</span>
+                    <a href={contactUrl} className="qr-link-url" title={contactUrl}>
+                      {contactUrl.replace(/^https?:\/\//, "")}
                     </a>
                   </div>
 

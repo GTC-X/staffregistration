@@ -11,6 +11,7 @@ type PublicCardViewProps = {
   email?: string;
   website?: string;
   theme?: string;
+  contactUrl?: string;
 };
 
 export default function PublicCardView(props: PublicCardViewProps) {

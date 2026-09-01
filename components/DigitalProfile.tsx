@@ -16,6 +16,7 @@ export type DigitalProfileData = {
   email?: string;
   website?: string;
   theme?: string;
+  contactUrl?: string;
 };
 
 function nameMonogram(name: string) {
@@ -58,7 +59,8 @@ export default function DigitalProfile({
   department,
   phone,
   website,
-  theme = "navygold"
+  theme = "navygold",
+  contactUrl
 }: DigitalProfileData) {
   const accent = ACCENTS[theme] || ACCENTS.navygold;
   const monogram = nameMonogram(name);
@@ -87,6 +89,11 @@ export default function DigitalProfile({
           </div>
           <h1 className="dp-name">{name}</h1>
           {department && <p className="dp-dept">{department}</p>}
+          {contactUrl && (
+            <a href={contactUrl} className="dp-save-contact" style={{ background: accent.text }}>
+              Save to Contacts
+            </a>
+          )}
         </div>
 
         {contacts.length > 0 && (
@@ -180,6 +187,17 @@ export default function DigitalProfile({
           font-weight: 500;
           color: #64748b;
           line-height: 1.4;
+        }
+
+        .dp-save-contact {
+          display: inline-block;
+          margin-top: 18px;
+          padding: 12px 22px;
+          border-radius: 12px;
+          color: #fff;
+          font-size: 14px;
+          font-weight: 600;
+          text-decoration: none;
         }
 
         .dp-section {

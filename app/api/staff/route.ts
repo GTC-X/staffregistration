@@ -31,3 +31,16 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ staff }, { status: 201 });
 }
+
+export async function DELETE(req: NextRequest) {
+  await connectToDatabase();
+  const body = await req.json();
+  const ids = Array.isArray(body.ids) ? body.ids.filter((id: unknown) => typeof id === "string" && id.trim()) : [];
+
+  if (!ids.length) {
+    return NextResponse.json({ error: "No staff selected." }, { status: 400 });
+  }
+
+  const result = await Staff.deleteMany({ _id: { $in: ids } });
+  return NextResponse.json({ deleted: result.deletedCount });
+}

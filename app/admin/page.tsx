@@ -22,13 +22,19 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [importStatus, setImportStatus] = useState<{ text: string; err: boolean } | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const allSelected = staff.length > 0 && selectedIds.size === staff.length;
+  const someSelected = selectedIds.size > 0;
 
   async function loadStaff() {
     setLoading(true);
     const res = await fetch("/api/staff");
     const data = await res.json();
     setStaff(data.staff || []);
+    setSelectedIds(new Set());
     setLoading(false);
   }
 
@@ -40,6 +46,59 @@ export default function AdminPage() {
     if (!confirm(`Remove ${name} from the directory?`)) return;
     await fetch(`/api/staff/${id}`, { method: "DELETE" });
     setStaff((prev) => prev.filter((s) => s._id !== id));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(staff.map((s) => s._id)));
+    }
+  }
+
+  async function handleBulkDelete() {
+    const ids = Array.from(selectedIds);
+    if (!ids.length) return;
+
+    const label = ids.length === 1 ? "1 employee" : `${ids.length} employees`;
+    if (!confirm(`Remove ${label} from the directory? This cannot be undone.`)) return;
+
+    setDeleting(true);
+    setImportStatus(null);
+
+    const res = await fetch("/api/staff", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids })
+    });
+    const data = await res.json();
+    setDeleting(false);
+
+    if (!res.ok) {
+      setImportStatus({ text: data.error || "Bulk delete failed.", err: true });
+      return;
+    }
+
+    setStaff((prev) => prev.filter((s) => !selectedIds.has(s._id)));
+    setSelectedIds(new Set());
+    setImportStatus({
+      text: `Removed ${data.deleted} employee${data.deleted === 1 ? "" : "s"}.`,
+      err: false
+    });
   }
 
   function handleImportClick() {
@@ -116,6 +175,15 @@ export default function AdminPage() {
           </p>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          {someSelected && (
+            <button
+              onClick={handleBulkDelete}
+              style={dangerBtn}
+              disabled={deleting}
+            >
+              {deleting ? "Deleting..." : `Delete selected (${selectedIds.size})`}
+            </button>
+          )}
           <button onClick={handleExportExcel} style={secondaryBtn} disabled={!staff.length || exporting}>
             {exporting ? "Exporting..." : "Export Excel + QR"}
           </button>
@@ -146,6 +214,18 @@ export default function AdminPage() {
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
             <tr style={{ background: "#faf9f5", textAlign: "left" }}>
+              <th style={{ padding: "10px 14px", fontWeight: 600, borderBottom: "1px solid #dedad0", width: 40 }}>
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = someSelected && !allSelected;
+                  }}
+                  onChange={toggleSelectAll}
+                  disabled={!staff.length}
+                  aria-label="Select all staff"
+                />
+              </th>
               {["Name", "Title", "Company", "Email", "Phone", ""].map((h) => (
                 <th key={h} style={{ padding: "10px 14px", fontWeight: 600, borderBottom: "1px solid #dedad0" }}>
                   {h}
@@ -155,7 +235,15 @@ export default function AdminPage() {
           </thead>
           <tbody>
             {staff.map((s) => (
-              <tr key={s._id} style={{ borderBottom: "1px solid #f0eee6" }}>
+              <tr key={s._id} style={{ borderBottom: "1px solid #f0eee6", background: selectedIds.has(s._id) ? "#f7f6ff" : undefined }}>
+                <td style={cellStyle}>
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(s._id)}
+                    onChange={() => toggleSelect(s._id)}
+                    aria-label={`Select ${s.name}`}
+                  />
+                </td>
                 <td style={cellStyle}>{s.name}</td>
                 <td style={cellStyle}>{s.title || "—"}</td>
                 <td style={cellStyle}>{s.company || "—"}</td>
@@ -176,7 +264,7 @@ export default function AdminPage() {
             ))}
             {!loading && staff.length === 0 && (
               <tr>
-                <td colSpan={6} style={{ padding: "24px 14px", textAlign: "center", color: "#888" }}>
+                <td colSpan={7} style={{ padding: "24px 14px", textAlign: "center", color: "#888" }}>
                   No staff yet. Add one, or import a CSV to get started.
                 </td>
               </tr>
@@ -214,6 +302,17 @@ const secondaryBtn: React.CSSProperties = {
   background: "#fff",
   color: "#1c1c1c",
   border: "1px solid #dedad0",
+  borderRadius: 6,
+  padding: "9px 16px",
+  fontSize: 13,
+  fontWeight: 600,
+  cursor: "pointer"
+};
+
+const dangerBtn: React.CSSProperties = {
+  background: "#b23b3b",
+  color: "#fff",
+  border: "none",
   borderRadius: 6,
   padding: "9px 16px",
   fontSize: 13,
