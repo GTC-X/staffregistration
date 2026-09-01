@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import QrCodeImage from "@/components/QrCodeImage";
-import { getCardUrl, getQrUrl, getVcardUrl } from "@/lib/card-url";
+import { getCardUrl, getQrPayload } from "@/lib/card-url";
 import { downloadQrPng } from "@/lib/qr";
 
 type Staff = {
@@ -12,6 +12,9 @@ type Staff = {
   name: string;
   title?: string;
   company?: string;
+  department?: string;
+  phone?: string;
+  website?: string;
 };
 
 export default function QrCodesPage() {
@@ -29,16 +32,16 @@ export default function QrCodesPage() {
   }, []);
 
   async function copyLink(person: Staff) {
-    const url = getVcardUrl(person);
+    const url = getCardUrl(person);
     await navigator.clipboard.writeText(url);
     setCopiedId(person._id);
     setTimeout(() => setCopiedId(null), 2000);
   }
 
   async function handleDownload(person: Staff) {
-    const url = getQrUrl(person);
+    const payload = getQrPayload(person);
     const safeName = person.name.replace(/[^\w\-]+/g, "-").toLowerCase();
-    await downloadQrPng(url, `${safeName}-qr.png`);
+    await downloadQrPng(payload, `${safeName}-qr.png`);
   }
 
   return (
@@ -47,8 +50,8 @@ export default function QrCodesPage() {
         <div>
           <h1 className="qr-title">QR codes</h1>
           <p className="qr-subtitle">
-            Each employee gets a unique QR code. Scanning it opens the phone&apos;s add-to-contacts screen with name and number filled in.
-            Editing name or contact details does not change the QR code.
+            Each employee gets a unique QR code. Scan with your phone camera to open Create Contact with name and phone filled in.
+            If you edit name or phone, re-download or re-print the QR code.
           </p>
         </div>
         <Link href="/admin" className="qr-back-link">
@@ -64,7 +67,7 @@ export default function QrCodesPage() {
         <div className="qr-grid">
           {staff.map((s) => {
             const cardUrl = getCardUrl(s);
-            const contactUrl = getQrUrl(s);
+            const qrPayload = getQrPayload(s);
             const subtitle = [s.title, s.company].filter(Boolean).join(" · ");
 
             return (
@@ -73,7 +76,7 @@ export default function QrCodesPage() {
 
                 <div className="qr-card-body">
                   <div className="qr-frame">
-                    <QrCodeImage url={contactUrl} size={160} alt={`QR code for ${s.name}`} />
+                    <QrCodeImage url={qrPayload} size={160} alt={`QR code for ${s.name}`} />
                   </div>
 
                   <div className="qr-info">
@@ -82,9 +85,9 @@ export default function QrCodesPage() {
                   </div>
 
                   <div className="qr-link-row">
-                    <span className="qr-link-label">Save contact link</span>
-                    <a href={contactUrl} className="qr-link-url" title={contactUrl}>
-                      {contactUrl.replace(/^https?:\/\//, "")}
+                    <span className="qr-link-label">Profile link</span>
+                    <a href={cardUrl} target="_blank" rel="noopener noreferrer" className="qr-link-url" title={cardUrl}>
+                      {cardUrl.replace(/^https?:\/\//, "")}
                     </a>
                   </div>
 

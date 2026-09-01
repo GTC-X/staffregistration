@@ -13,6 +13,16 @@ function escapeVcard(value: string) {
     .replace(/\r?\n/g, "\\n");
 }
 
+function escapeMecard(value: string) {
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,")
+    .replace(/:/g, "\\:")
+    .replace(/\r?\n/g, "");
+}
+
 function splitName(fullName: string) {
   const parts = fullName.trim().split(/\s+/).filter(Boolean);
   if (parts.length <= 1) return { given: parts[0] || "", family: "" };
@@ -46,4 +56,25 @@ export function buildVcard(staff: VcardStaff) {
 export function vcardFilename(name: string) {
   const safe = name.replace(/[^\w\-]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase();
   return `${safe || "contact"}.vcf`;
+}
+
+/** Embedded in QR codes — opens add-to-contacts directly on most phone cameras (no .vcf download). */
+export function buildMecard(staff: VcardStaff) {
+  const { given, family } = splitName(staff.name);
+  const parts = [`N:${escapeMecard(family)},${escapeMecard(given)}`];
+
+  if (staff.phone?.trim()) {
+    parts.push(`TEL:${escapeMecard(staff.phone.trim())}`);
+  }
+
+  if (staff.website?.trim()) {
+    const url = staff.website.startsWith("http") ? staff.website : `https://${staff.website}`;
+    parts.push(`URL:${escapeMecard(url)}`);
+  }
+
+  if (staff.department?.trim()) {
+    parts.push(`NOTE:${escapeMecard(staff.department.trim())}`);
+  }
+
+  return `MECARD:${parts.join(";")};;`;
 }

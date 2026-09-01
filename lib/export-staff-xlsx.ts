@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import { getCardUrl, getQrUrl } from "./card-url";
+import { getCardUrl, getQrPayload } from "./card-url";
 import { generateQrDataUrl } from "./qr";
 import type { StaffExportRow } from "./export-staff";
 
@@ -31,7 +31,7 @@ export async function buildStaffExcelWithQr(staff: StaffExportRow[], origin?: st
   for (let i = 0; i < staff.length; i++) {
     const person = staff[i];
     const cardUrl = getCardUrl(person, origin);
-    const qrUrl = getQrUrl(person, origin);
+    const qrPayload = getQrPayload(person);
     const rowNumber = i + 2;
 
     const row = sheet.addRow({
@@ -49,7 +49,7 @@ export async function buildStaffExcelWithQr(staff: StaffExportRow[], origin?: st
     row.alignment = { vertical: "middle", wrapText: true };
     row.getCell("cardUrl").value = { text: cardUrl, hyperlink: cardUrl };
 
-    const dataUrl = await generateQrDataUrl(qrUrl);
+    const dataUrl = await generateQrDataUrl(qrPayload);
     const base64 = dataUrl.split(",")[1];
     const imageId = workbook.addImage({ base64, extension: "png" });
 
