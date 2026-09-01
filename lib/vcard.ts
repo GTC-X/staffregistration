@@ -29,6 +29,39 @@ function splitName(fullName: string) {
   return { family: parts[parts.length - 1], given: parts.slice(0, -1).join(" ") };
 }
 
+/** Format phone for contact QR/vCard so Android does not prepend the wrong country code (+1). */
+export function normalizePhoneForContact(phone: string) {
+  const raw = phone.trim();
+  if (!raw) return "";
+
+  if (raw.startsWith("+")) {
+    return raw.replace(/[^\d+]/g, "");
+  }
+
+  let digits = raw.replace(/\D/g, "");
+  if (digits.startsWith("00")) digits = digits.slice(2);
+
+  // UAE: 971XXXXXXXXX
+  if (digits.startsWith("971")) {
+    return `+${digits}`;
+  }
+
+  // UAE local: 05XXXXXXXX or 5XXXXXXXX
+  if (digits.startsWith("0") && digits.length >= 9) {
+    return `+971${digits.slice(1)}`;
+  }
+  if (/^5\d{8}$/.test(digits)) {
+    return `+971${digits}`;
+  }
+
+  // Other international numbers stored without +
+  if (digits.length >= 10) {
+    return `+${digits}`;
+  }
+
+  return digits;
+}
+
 export function buildVcard(staff: VcardStaff) {
   const lines = ["BEGIN:VCARD", "VERSION:3.0"];
   const { given, family } = splitName(staff.name);
@@ -37,7 +70,8 @@ export function buildVcard(staff: VcardStaff) {
   lines.push(`FN:${escapeVcard(staff.name)}`);
 
   if (staff.phone?.trim()) {
-    lines.push(`TEL;TYPE=CELL,VOICE:${escapeVcard(staff.phone.trim())}`);
+    const phone = normalizePhoneForContact(staff.phone);
+    if (phone) lines.push(`TEL;TYPE=CELL,VOICE:${escapeVcard(phone)}`);
   }
 
   if (staff.website?.trim()) {
@@ -64,7 +98,8 @@ export function buildMecard(staff: VcardStaff) {
   const parts = [`N:${escapeMecard(family)},${escapeMecard(given)}`];
 
   if (staff.phone?.trim()) {
-    parts.push(`TEL:${escapeMecard(staff.phone.trim())}`);
+    const phone = normalizePhoneForContact(staff.phone);
+    if (phone) parts.push(`TEL:${escapeMecard(phone)}`);
   }
 
   if (staff.website?.trim()) {
