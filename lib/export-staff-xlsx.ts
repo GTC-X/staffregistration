@@ -1,9 +1,9 @@
 import ExcelJS from "exceljs";
-import { getCardUrl, getQrPayload, getVcardUrl } from "./card-url";
+import { getCardUrl, getQrImageUrl, getQrPayload } from "./card-url";
 import { generateQrDataUrl } from "./qr";
 import type { StaffExportRow } from "./export-staff";
 
-const QR_COLUMN = 10; // 1-based column J (QR image)
+const QR_IMAGE_COLUMN = 11; // 1-based column K (embedded QR image)
 const QR_SIZE = 130;
 const ROW_HEIGHT = 105;
 
@@ -21,7 +21,7 @@ export async function buildStaffExcelWithQr(staff: StaffExportRow[], origin?: st
     { header: "Email", key: "email", width: 28 },
     { header: "Website", key: "website", width: 24 },
     { header: "Profile link", key: "cardUrl", width: 36 },
-    { header: "QR contact link", key: "contactUrl", width: 36 },
+    { header: "QR image link", key: "qrImageUrl", width: 36 },
     { header: "QR code", key: "qr", width: 22 }
   ];
 
@@ -32,7 +32,7 @@ export async function buildStaffExcelWithQr(staff: StaffExportRow[], origin?: st
   for (let i = 0; i < staff.length; i++) {
     const person = staff[i];
     const cardUrl = getCardUrl(person, origin);
-    const contactUrl = getVcardUrl(person, origin);
+    const qrImageUrl = getQrImageUrl(person, origin);
     const qrPayload = getQrPayload(person);
     const rowNumber = i + 2;
 
@@ -45,27 +45,27 @@ export async function buildStaffExcelWithQr(staff: StaffExportRow[], origin?: st
       email: person.email || "",
       website: person.website || "",
       cardUrl,
-      contactUrl
+      qrImageUrl
     });
 
     row.height = ROW_HEIGHT;
     row.alignment = { vertical: "middle", wrapText: true };
     row.getCell("cardUrl").value = { text: cardUrl, hyperlink: cardUrl };
-    row.getCell("contactUrl").value = { text: contactUrl, hyperlink: contactUrl };
+    row.getCell("qrImageUrl").value = { text: qrImageUrl, hyperlink: qrImageUrl };
 
     const dataUrl = await generateQrDataUrl(qrPayload);
     const base64 = dataUrl.split(",")[1];
     const imageId = workbook.addImage({ base64, extension: "png" });
 
     sheet.addImage(imageId, {
-      tl: { col: QR_COLUMN - 1 + 0.15, row: rowNumber - 1 + 0.08 },
+      tl: { col: QR_IMAGE_COLUMN - 1 + 0.15, row: rowNumber - 1 + 0.08 },
       ext: { width: QR_SIZE, height: QR_SIZE }
     });
   }
 
   sheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return;
-    row.getCell(QR_COLUMN).alignment = { vertical: "middle", horizontal: "center" };
+    row.getCell(QR_IMAGE_COLUMN).alignment = { vertical: "middle", horizontal: "center" };
   });
 
   return workbook.xlsx.writeBuffer();

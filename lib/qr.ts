@@ -6,8 +6,12 @@ const QR_OPTIONS = {
   color: { dark: "#12194a", light: "#ffffff" }
 } as const;
 
-export async function generateQrDataUrl(url: string) {
-  return QRCode.toDataURL(url, QR_OPTIONS);
+export async function generateQrDataUrl(text: string) {
+  return QRCode.toDataURL(text, QR_OPTIONS);
+}
+
+export async function generateQrPngBuffer(text: string) {
+  return QRCode.toBuffer(text, { ...QR_OPTIONS, type: "png" });
 }
 
 export async function downloadQrPng(url: string, filename: string) {

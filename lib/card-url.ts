@@ -15,6 +15,12 @@ export function getCardUrl(staff: { _id: string; qrId?: string | null }, origin?
   return `${appOrigin(origin)}/card/${qrKey}`;
 }
 
+/** Public PNG URL for this employee's QR code image. */
+export function getQrImageUrl(staff: { _id: string; qrId?: string | null }, origin?: string) {
+  const qrKey = getStaffQrKey(staff);
+  return `${appOrigin(origin)}/api/qr/${qrKey}`;
+}
+
 /** Opens the phone's add-to-contacts screen when scanned from a QR code. */
 export function getVcardUrl(staff: { _id: string; qrId?: string | null }, origin?: string) {
   const qrKey = getStaffQrKey(staff);
