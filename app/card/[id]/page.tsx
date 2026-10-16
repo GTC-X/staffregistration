@@ -3,6 +3,17 @@ import { findStaffByQrOrId } from "@/lib/find-staff";
 import { getVcardUrl } from "@/lib/card-url";
 import PublicCardView from "@/components/PublicCardView";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  await connectToDatabase();
+  const staff = await findStaffByQrOrId(params.id);
+  if (!staff) return { title: "Not found" };
+  return {
+    title: staff.name,
+    description: [staff.title, staff.company].filter(Boolean).join(" · ") || "Digital business card"
+  };
+}
 
 export default async function PublicCardPage({ params }: { params: { id: string } }) {
   await connectToDatabase();

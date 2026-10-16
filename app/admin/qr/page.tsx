@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import QrCodeImage from "@/components/QrCodeImage";
-import { getCardUrl, getQrPayload } from "@/lib/card-url";
+import { getCardUrl } from "@/lib/card-url";
 import { downloadQrPng } from "@/lib/qr";
 
 type Staff = {
@@ -39,7 +39,7 @@ export default function QrCodesPage() {
   }
 
   async function handleDownload(person: Staff) {
-    const payload = getQrPayload(person);
+    const payload = getCardUrl(person);
     const safeName = person.name.replace(/[^\w\-]+/g, "-").toLowerCase();
     await downloadQrPng(payload, `${safeName}-qr.png`);
   }
@@ -50,8 +50,8 @@ export default function QrCodesPage() {
         <div>
           <h1 className="qr-title">QR codes</h1>
           <p className="qr-subtitle">
-            Each employee gets a unique QR code. Scan with your phone camera to open Create Contact with name and phone filled in.
-            If you edit name or phone, re-download or re-print the QR code.
+            Each QR code opens the employee&apos;s digital business card in the browser. Re-download or re-print after profile
+            changes if you use printed codes.
           </p>
         </div>
         <Link href="/admin" className="qr-back-link">
@@ -67,7 +67,7 @@ export default function QrCodesPage() {
         <div className="qr-grid">
           {staff.map((s) => {
             const cardUrl = getCardUrl(s);
-            const qrPayload = getQrPayload(s);
+            const qrPayload = getCardUrl(s);
             const subtitle = [s.title, s.company].filter(Boolean).join(" · ");
 
             return (

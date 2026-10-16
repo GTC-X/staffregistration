@@ -5,7 +5,7 @@ import { getQrPayload } from "@/lib/card-url";
 import { generateQrPngBuffer } from "@/lib/qr";
 import { vcardFilename } from "@/lib/vcard";
 
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: { id: string } }) {
   await connectToDatabase();
   const staff = await findStaffByQrOrId(params.id);
 
@@ -13,12 +13,8 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
 
-  const payload = getQrPayload({
-    name: staff.name,
-    phone: staff.phone,
-    department: staff.department,
-    website: staff.website
-  });
+  const origin = new URL(req.url).origin;
+  const payload = getQrPayload({ _id: String(staff._id), qrId: staff.qrId }, origin);
 
   const png = await generateQrPngBuffer(payload);
   const filename = vcardFilename(staff.name).replace(".vcf", "-qr.png");

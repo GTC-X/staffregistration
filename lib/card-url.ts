@@ -1,5 +1,4 @@
 import { getStaffQrKey } from "./staff-qr-id";
-import { buildMecard, type VcardStaff } from "./vcard";
 
 function appOrigin(origin?: string) {
   return (
@@ -27,14 +26,14 @@ export function getVcardUrl(staff: { _id: string; qrId?: string | null }, origin
   return `${appOrigin(origin)}/api/vcard/${qrKey}`;
 }
 
-/** MECARD text encoded in QR codes — scan opens add-to-contacts on most phones. */
-export function getQrPayload(staff: VcardStaff) {
-  return buildMecard(staff);
+/** URL encoded in QR codes — scan opens the digital business card page. */
+export function getQrPayload(staff: { _id: string; qrId?: string | null }, origin?: string) {
+  return getCardUrl(staff, origin);
 }
 
-/** @deprecated use getQrPayload — kept for callers expecting this name */
-export function getQrUrl(staff: VcardStaff) {
-  return getQrPayload(staff);
+/** @deprecated use getQrPayload */
+export function getQrUrl(staff: { _id: string; qrId?: string | null }, origin?: string) {
+  return getQrPayload(staff, origin);
 }
 
 /** @deprecated pass the staff object so the stable qrId is used */

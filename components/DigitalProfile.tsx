@@ -1,10 +1,15 @@
 "use client";
 
-import { Inter } from "next/font/google";
+import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 
-const inter = Inter({
+const display = Cormorant_Garamond({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"]
+  weight: ["500", "600", "700"]
+});
+
+const sans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"]
 });
 
 export type DigitalProfileData = {
@@ -19,35 +24,34 @@ export type DigitalProfileData = {
   contactUrl?: string;
 };
 
-function nameMonogram(name: string) {
-  const initials = name
-    .trim()
-    .split(/\s+/)
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-  return initials || "•";
+function formatWebsiteDisplay(url: string) {
+  return url.replace(/^https?:\/\//, "").replace(/\/$/, "");
 }
 
-const ACCENTS: Record<string, { bg: string; text: string; soft: string; ring: string }> = {
-  navygold: { bg: "#12194a", text: "#12194a", soft: "#eef0f8", ring: "#c9a24b" },
-  cream: { bg: "#2d3a6e", text: "#1e2868", soft: "#f4f2ec", ring: "#12194a" },
-  charcoal: { bg: "#374151", text: "#1f2937", soft: "#f3f4f6", ring: "#9ca3af" },
-  white: { bg: "#2563eb", text: "#1e40af", soft: "#eff6ff", ring: "#93c5fd" }
-};
+function websiteHref(url: string) {
+  return url.startsWith("http") ? url : `https://${url}`;
+}
 
 function PhoneIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
       <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+    </svg>
+  );
+}
+
+function MailIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
     </svg>
   );
 }
 
 function WebIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10" />
       <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
     </svg>
@@ -56,243 +60,234 @@ function WebIcon() {
 
 export default function DigitalProfile({
   name,
+  title,
+  company,
   department,
   phone,
+  email,
   website,
-  theme = "navygold",
   contactUrl
 }: DigitalProfileData) {
-  const accent = ACCENTS[theme] || ACCENTS.navygold;
-  const monogram = nameMonogram(name);
+  const roleLine = title || department;
+  const brand = company?.trim() || "GTC Prime";
 
   const contacts = [
-    phone && { label: "Phone", value: phone, href: `tel:${phone}`, Icon: PhoneIcon },
+    phone && { label: "Phone", value: phone, href: `tel:${phone.replace(/\s/g, "")}`, Icon: PhoneIcon },
+    email && { label: "Email", value: email, href: `mailto:${email}`, Icon: MailIcon },
     website && {
       label: "Website",
-      value: website.replace(/^https?:\/\//, ""),
-      href: website.startsWith("http") ? website : `https://${website}`,
-      Icon: WebIcon
+      value: formatWebsiteDisplay(website),
+      href: websiteHref(website),
+      Icon: WebIcon,
+      external: true
     }
   ].filter(Boolean) as {
     label: string;
     value: string;
     href: string;
     Icon: () => JSX.Element;
+    external?: boolean;
   }[];
 
   return (
-    <div className={`${inter.className} dp-page`}>
-      <div className="dp-card">
-        <div className="dp-header">
-          <div className="dp-avatar" style={{ background: accent.soft, color: accent.text, boxShadow: `0 0 0 3px ${accent.ring}22` }}>
-            {monogram}
-          </div>
-          <h1 className="dp-name">{name}</h1>
-          {department && <p className="dp-dept">{department}</p>}
-          {contactUrl && (
-            <a href={contactUrl} className="dp-save-contact" style={{ background: accent.text }}>
-              Save to Contacts
-            </a>
-          )}
-        </div>
+    <div className={`${sans.className} gtc-page`}>
+      <div className="gtc-glow" aria-hidden />
+      <article className="gtc-card">
+        <header className="gtc-hero">
+          <div className="gtc-gold-bar" aria-hidden />
+          <p className="gtc-brand">{brand}</p>
+          <h1 className={`${display.className} gtc-name`}>{name}</h1>
+          {roleLine && <p className="gtc-title">{roleLine}</p>}
+        </header>
 
         {contacts.length > 0 && (
-          <div className="dp-section">
-            <p className="dp-section-label">Contact</p>
-            <div className="dp-contacts">
+          <div className="gtc-body">
+            <ul className="gtc-list">
               {contacts.map((c) => (
-                <a
-                  key={c.label}
-                  href={c.href}
-                  className="dp-contact"
-                  target={c.label === "Website" ? "_blank" : undefined}
-                  rel={c.label === "Website" ? "noopener noreferrer" : undefined}
-                >
-                  <span className="dp-contact-icon" style={{ background: accent.soft, color: accent.text }}>
-                    <c.Icon />
-                  </span>
-                  <span className="dp-contact-body">
-                    <span className="dp-contact-label">{c.label}</span>
-                    <span className="dp-contact-value">{c.value}</span>
-                  </span>
-                  <span className="dp-contact-arrow" aria-hidden>
-                    ›
-                  </span>
-                </a>
+                <li key={c.label}>
+                  <a
+                    href={c.href}
+                    className="gtc-row"
+                    target={c.external ? "_blank" : undefined}
+                    rel={c.external ? "noopener noreferrer" : undefined}
+                  >
+                    <span className="gtc-row-icon">
+                      <c.Icon />
+                    </span>
+                    <span className="gtc-row-text">{c.value}</span>
+                  </a>
+                </li>
               ))}
-            </div>
+            </ul>
+
+            {contactUrl && (
+              <a href={contactUrl} className="gtc-save">
+                Save to Contacts
+              </a>
+            )}
           </div>
         )}
 
-        <div className="dp-footer">
-          <span className="dp-footer-dot" style={{ background: accent.ring }} />
-          <span className="dp-footer-text">Digital business card</span>
-        </div>
-      </div>
+        <footer className="gtc-foot">
+          <span className="gtc-foot-line" />
+        </footer>
+      </article>
 
       <style jsx>{`
-        .dp-page {
-          min-height: 100vh;
+        .gtc-page {
+          min-height: 100dvh;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 32px 20px;
-          background: linear-gradient(160deg, #f8fafc 0%, #f1f5f9 50%, #e8eef5 100%);
-        }
-
-        .dp-card {
-          width: 100%;
-          max-width: 400px;
-          background: #ffffff;
-          border-radius: 20px;
-          border: 1px solid rgba(15, 23, 42, 0.06);
-          box-shadow:
-            0 1px 2px rgba(15, 23, 42, 0.04),
-            0 8px 24px rgba(15, 23, 42, 0.06),
-            0 24px 48px rgba(15, 23, 42, 0.04);
+          padding: 28px 18px;
+          position: relative;
           overflow: hidden;
+          background: radial-gradient(ellipse 120% 80% at 50% -20%, #2a3578 0%, #12194a 45%, #0a0e28 100%);
         }
 
-        .dp-header {
-          padding: 36px 28px 28px;
+        .gtc-glow {
+          position: absolute;
+          width: 320px;
+          height: 320px;
+          top: 15%;
+          left: 50%;
+          transform: translateX(-50%);
+          background: radial-gradient(circle, rgba(201, 162, 75, 0.18) 0%, transparent 70%);
+          pointer-events: none;
+        }
+
+        .gtc-card {
+          position: relative;
+          width: 100%;
+          max-width: 420px;
+          background: #ffffff;
+          border-radius: 24px;
+          overflow: hidden;
+          box-shadow:
+            0 0 0 1px rgba(255, 255, 255, 0.08),
+            0 24px 64px rgba(0, 0, 0, 0.45),
+            0 8px 24px rgba(18, 25, 74, 0.2);
+        }
+
+        .gtc-hero {
+          padding: 28px 32px 32px;
           text-align: center;
-          border-bottom: 1px solid #f1f5f9;
-        }
-
-        .dp-avatar {
-          width: 72px;
-          height: 72px;
-          margin: 0 auto 18px;
-          border-radius: 20px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 22px;
-          font-weight: 700;
-          letter-spacing: -0.02em;
-        }
-
-        .dp-name {
-          margin: 0;
-          font-size: 24px;
-          font-weight: 700;
-          color: #0f172a;
-          letter-spacing: -0.03em;
-          line-height: 1.25;
-        }
-
-        .dp-dept {
-          margin: 8px 0 0;
-          font-size: 14px;
-          font-weight: 500;
-          color: #64748b;
-          line-height: 1.4;
-        }
-
-        .dp-save-contact {
-          display: inline-block;
-          margin-top: 18px;
-          padding: 12px 22px;
-          border-radius: 12px;
+          background: linear-gradient(180deg, #12194a 0%, #1a2460 100%);
           color: #fff;
-          font-size: 14px;
-          font-weight: 600;
-          text-decoration: none;
         }
 
-        .dp-section {
-          padding: 24px 20px 8px;
+        .gtc-gold-bar {
+          width: 48px;
+          height: 3px;
+          margin: 0 auto 20px;
+          border-radius: 2px;
+          background: linear-gradient(90deg, #a8863a, #e8c878, #c9a24b);
         }
 
-        .dp-section-label {
-          margin: 0 0 12px 4px;
+        .gtc-brand {
+          margin: 0 0 16px;
           font-size: 11px;
           font-weight: 600;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.22em;
           text-transform: uppercase;
-          color: #94a3b8;
+          color: rgba(201, 162, 75, 0.95);
         }
 
-        .dp-contacts {
+        .gtc-name {
+          margin: 0;
+          font-size: clamp(28px, 7vw, 34px);
+          font-weight: 600;
+          line-height: 1.15;
+          letter-spacing: 0.01em;
+          color: #ffffff;
+        }
+
+        .gtc-title {
+          margin: 14px auto 0;
+          max-width: 320px;
+          font-size: 15px;
+          font-weight: 500;
+          line-height: 1.45;
+          color: rgba(255, 255, 255, 0.78);
+        }
+
+        .gtc-body {
+          padding: 8px 16px 24px;
+        }
+
+        .gtc-list {
+          list-style: none;
+          margin: 0;
+          padding: 0;
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 6px;
         }
 
-        .dp-contact {
+        .gtc-row {
           display: flex;
           align-items: center;
           gap: 14px;
-          padding: 14px 16px;
+          padding: 16px 18px;
           border-radius: 14px;
-          background: #f8fafc;
-          border: 1px solid #eef2f6;
           text-decoration: none;
-          color: inherit;
+          color: #0f172a;
+          background: #f8f9fc;
+          border: 1px solid #eef1f7;
+          transition: background 0.15s ease, border-color 0.15s ease;
         }
 
-        .dp-contact-icon {
+        .gtc-row:active {
+          background: #eef1f8;
+        }
+
+        .gtc-row-icon {
           flex-shrink: 0;
-          width: 40px;
-          height: 40px;
-          border-radius: 12px;
+          width: 44px;
+          height: 44px;
           display: flex;
           align-items: center;
           justify-content: center;
+          border-radius: 12px;
+          color: #12194a;
+          background: linear-gradient(145deg, #ffffff, #eef0f8);
+          border: 1px solid #e2e8f4;
         }
 
-        .dp-contact-body {
+        .gtc-row-text {
           flex: 1;
           min-width: 0;
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
+          font-size: 15px;
+          font-weight: 500;
+          line-height: 1.35;
+          word-break: break-word;
         }
 
-        .dp-contact-label {
-          font-size: 11px;
+        .gtc-save {
+          display: block;
+          margin-top: 18px;
+          padding: 15px 20px;
+          border-radius: 14px;
+          text-align: center;
+          text-decoration: none;
+          font-size: 15px;
           font-weight: 600;
-          color: #94a3b8;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
+          color: #fff;
+          background: linear-gradient(135deg, #12194a 0%, #1e2868 100%);
+          box-shadow: 0 4px 14px rgba(18, 25, 74, 0.35);
         }
 
-        .dp-contact-value {
-          font-size: 14px;
-          font-weight: 500;
-          color: #1e293b;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .dp-contact-arrow {
-          flex-shrink: 0;
-          font-size: 20px;
-          font-weight: 300;
-          color: #cbd5e1;
-          line-height: 1;
-        }
-
-        .dp-footer {
+        .gtc-foot {
+          padding: 0 32px 20px;
           display: flex;
-          align-items: center;
           justify-content: center;
-          gap: 8px;
-          padding: 20px 28px 24px;
         }
 
-        .dp-footer-dot {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-        }
-
-        .dp-footer-text {
-          font-size: 11px;
-          font-weight: 500;
-          color: #cbd5e1;
-          letter-spacing: 0.04em;
+        .gtc-foot-line {
+          width: 40px;
+          height: 4px;
+          border-radius: 2px;
+          background: #e8ecf4;
         }
       `}</style>
     </div>
