@@ -1,4 +1,7 @@
 import { getStaffQrKey } from "./staff-qr-id";
+import { buildPhoneMecard } from "./vcard";
+
+export type QrVariant = "profile" | "phone";
 
 function appOrigin(origin?: string) {
   return (
@@ -14,10 +17,15 @@ export function getCardUrl(staff: { _id: string; qrId?: string | null }, origin?
   return `${appOrigin(origin)}/card/${qrKey}`;
 }
 
-/** Public PNG URL for this employee's QR code image. */
-export function getQrImageUrl(staff: { _id: string; qrId?: string | null }, origin?: string) {
+/** Public PNG URL for a QR variant (`profile` = digital card link, `phone` = contact QR). */
+export function getQrImageUrl(
+  staff: { _id: string; qrId?: string | null },
+  origin?: string,
+  variant: QrVariant = "profile"
+) {
   const qrKey = getStaffQrKey(staff);
-  return `${appOrigin(origin)}/api/qr/${qrKey}`;
+  const base = `${appOrigin(origin)}/api/qr/${qrKey}`;
+  return variant === "phone" ? `${base}?type=phone` : base;
 }
 
 /** Opens the phone's add-to-contacts screen when scanned from a QR code. */
@@ -26,14 +34,33 @@ export function getVcardUrl(staff: { _id: string; qrId?: string | null }, origin
   return `${appOrigin(origin)}/api/vcard/${qrKey}`;
 }
 
-/** URL encoded in QR codes — scan opens the digital business card page. */
-export function getQrPayload(staff: { _id: string; qrId?: string | null }, origin?: string) {
-  return getCardUrl(staff, origin);
+type QrStaffRef = { _id: string; qrId?: string | null; name?: string; phone?: string };
+
+export function getQrPayloadForVariant(staff: QrStaffRef, variant: QrVariant, origin?: string) {
+  if (variant === "profile") {
+    return getCardUrl(staff, origin);
+  }
+  return buildPhoneMecard({ name: staff.name || "", phone: staff.phone });
 }
 
-/** @deprecated use getQrPayload */
+/** Profile (full detail) QR payload — digital business card URL. */
+export function getProfileQrPayload(staff: { _id: string; qrId?: string | null }, origin?: string) {
+  return getQrPayloadForVariant(staff, "profile", origin);
+}
+
+/** Phone-only QR payload — MECARD with name and phone. */
+export function getPhoneQrPayload(staff: { name: string; phone?: string }) {
+  return buildPhoneMecard(staff);
+}
+
+/** @deprecated use getProfileQrPayload or getPhoneQrPayload */
+export function getQrPayload(staff: { _id: string; qrId?: string | null }, origin?: string) {
+  return getProfileQrPayload(staff, origin);
+}
+
+/** @deprecated use getProfileQrPayload */
 export function getQrUrl(staff: { _id: string; qrId?: string | null }, origin?: string) {
-  return getQrPayload(staff, origin);
+  return getProfileQrPayload(staff, origin);
 }
 
 /** @deprecated pass the staff object so the stable qrId is used */

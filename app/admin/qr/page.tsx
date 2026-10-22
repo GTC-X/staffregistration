@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import QrCodeImage from "@/components/QrCodeImage";
-import { getCardUrl } from "@/lib/card-url";
+import { getCardUrl, getPhoneQrPayload, getProfileQrPayload } from "@/lib/card-url";
 import { downloadQrPng } from "@/lib/qr";
 
 type Staff = {
@@ -38,10 +38,10 @@ export default function QrCodesPage() {
     setTimeout(() => setCopiedId(null), 2000);
   }
 
-  async function handleDownload(person: Staff) {
-    const payload = getCardUrl(person);
+  async function handleDownload(person: Staff, kind: "profile" | "phone") {
+    const payload = kind === "profile" ? getProfileQrPayload(person) : getPhoneQrPayload(person);
     const safeName = person.name.replace(/[^\w\-]+/g, "-").toLowerCase();
-    await downloadQrPng(payload, `${safeName}-qr.png`);
+    await downloadQrPng(payload, `${safeName}-${kind}-qr.png`);
   }
 
   return (
@@ -50,8 +50,9 @@ export default function QrCodesPage() {
         <div>
           <h1 className="qr-title">QR codes</h1>
           <p className="qr-subtitle">
-            Each QR code opens the employee&apos;s digital business card in the browser. Re-download or re-print after profile
-            changes if you use printed codes.
+            Two codes per employee: <strong>Phone</strong> adds name and mobile to contacts when scanned;{" "}
+            <strong>Full profile</strong> opens the digital business card with title, email, and website. Re-print after profile
+            changes.
           </p>
         </div>
         <Link href="/admin" className="qr-back-link">
@@ -67,7 +68,8 @@ export default function QrCodesPage() {
         <div className="qr-grid">
           {staff.map((s) => {
             const cardUrl = getCardUrl(s);
-            const qrPayload = getCardUrl(s);
+            const profilePayload = getProfileQrPayload(s);
+            const phonePayload = getPhoneQrPayload(s);
             const subtitle = [s.title, s.company].filter(Boolean).join(" · ");
 
             return (
@@ -75,8 +77,25 @@ export default function QrCodesPage() {
                 <div className="qr-card-shine" aria-hidden />
 
                 <div className="qr-card-body">
-                  <div className="qr-frame">
-                    <QrCodeImage url={qrPayload} size={160} alt={`QR code for ${s.name}`} />
+                  <div className="qr-dual">
+                    <div className="qr-dual-item">
+                      <span className="qr-dual-label">Phone</span>
+                      <div className="qr-frame">
+                        <QrCodeImage url={phonePayload} size={128} alt={`Phone QR for ${s.name}`} />
+                      </div>
+                      <button type="button" onClick={() => handleDownload(s, "phone")} className="qr-mini-btn">
+                        Download
+                      </button>
+                    </div>
+                    <div className="qr-dual-item">
+                      <span className="qr-dual-label">Full profile</span>
+                      <div className="qr-frame">
+                        <QrCodeImage url={profilePayload} size={128} alt={`Profile QR for ${s.name}`} />
+                      </div>
+                      <button type="button" onClick={() => handleDownload(s, "profile")} className="qr-mini-btn">
+                        Download
+                      </button>
+                    </div>
                   </div>
 
                   <div className="qr-info">
@@ -93,13 +112,10 @@ export default function QrCodesPage() {
 
                   <div className="qr-actions">
                     <a href={cardUrl} target="_blank" rel="noopener noreferrer" className="qr-btn qr-btn-primary">
-                      Preview
+                      Preview card
                     </a>
                     <button type="button" onClick={() => copyLink(s)} className="qr-btn qr-btn-secondary">
                       {copiedId === s._id ? "Copied!" : "Copy link"}
-                    </button>
-                    <button type="button" onClick={() => handleDownload(s)} className="qr-btn qr-btn-secondary">
-                      Download
                     </button>
                   </div>
                 </div>
@@ -158,8 +174,42 @@ export default function QrCodesPage() {
 
         .qr-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
           gap: 20px;
+        }
+
+        .qr-dual {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+          width: 100%;
+        }
+
+        .qr-dual-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .qr-dual-label {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: #12194a;
+        }
+
+        .qr-mini-btn {
+          padding: 6px 12px;
+          border-radius: 8px;
+          font-size: 11px;
+          font-weight: 600;
+          cursor: pointer;
+          font-family: inherit;
+          background: #fff;
+          color: #12194a;
+          border: 1px solid #dedad0;
         }
 
         .qr-card {
@@ -254,7 +304,7 @@ export default function QrCodesPage() {
 
         .qr-actions {
           display: grid;
-          grid-template-columns: 1fr 1fr 1fr;
+          grid-template-columns: 1fr 1fr;
           gap: 8px;
           width: 100%;
           margin-top: 16px;

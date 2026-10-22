@@ -149,7 +149,7 @@ export default function AdminPage() {
     setImportStatus(null);
     try {
       const { buildStaffExcelWithQr, downloadExcel } = await import("@/lib/export-staff-xlsx");
-      const buffer = await buildStaffExcelWithQr(staff);
+      const buffer = await buildStaffExcelWithQr(staff, window.location.origin);
       const date = new Date().toISOString().slice(0, 10);
       downloadExcel(`staff-qr-export-${date}.xlsx`, buffer);
       setImportStatus({

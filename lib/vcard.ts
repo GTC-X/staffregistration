@@ -78,3 +78,15 @@ export function buildMecard(staff: VcardStaff) {
 
   return `MECARD:${parts.join(";")};;`;
 }
+
+/** Phone QR only — name + mobile; scan opens add-to-contacts with minimal fields. */
+export function buildPhoneMecard(staff: { name: string; phone?: string }) {
+  const { given, family } = splitName(staff.name);
+  const parts = [`N:${escapeMecard(family)},${escapeMecard(given)}`];
+
+  if (staff.phone?.trim()) {
+    parts.push(`TEL:${escapeMecard(staff.phone.trim())}`);
+  }
+
+  return `MECARD:${parts.join(";")};;`;
+}

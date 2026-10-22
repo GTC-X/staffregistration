@@ -1,10 +1,11 @@
 import ExcelJS from "exceljs";
-import { getCardUrl, getQrImageUrl, getQrPayload } from "./card-url";
+import { getCardUrl, getPhoneQrPayload, getProfileQrPayload, getQrImageUrl } from "./card-url";
 import { generateQrDataUrl } from "./qr";
 import type { StaffExportRow } from "./export-staff";
 
-const QR_IMAGE_COLUMN = 11; // 1-based column K (embedded QR image)
-const QR_SIZE = 130;
+const PROFILE_QR_COLUMN = 11;
+const PHONE_QR_COLUMN = 12;
+const QR_SIZE = 120;
 const ROW_HEIGHT = 105;
 
 export async function buildStaffExcelWithQr(staff: StaffExportRow[], origin?: string) {
@@ -21,19 +22,23 @@ export async function buildStaffExcelWithQr(staff: StaffExportRow[], origin?: st
     { header: "Email", key: "email", width: 28 },
     { header: "Website", key: "website", width: 24 },
     { header: "Profile link", key: "cardUrl", width: 36 },
-    { header: "QR image link", key: "qrImageUrl", width: 36 },
-    { header: "QR code", key: "qr", width: 22 }
+    { header: "Profile QR image link", key: "profileQrImageUrl", width: 36 },
+    { header: "Phone QR image link", key: "phoneQrImageUrl", width: 36 },
+    { header: "Profile QR", key: "profileQr", width: 20 },
+    { header: "Phone QR", key: "phoneQr", width: 20 }
   ];
 
   sheet.getRow(1).font = { bold: true, color: { argb: "FF12194A" } };
-  sheet.getRow(1).alignment = { vertical: "middle", horizontal: "center" };
-  sheet.getRow(1).height = 22;
+  sheet.getRow(1).alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+  sheet.getRow(1).height = 28;
 
   for (let i = 0; i < staff.length; i++) {
     const person = staff[i];
     const cardUrl = getCardUrl(person, origin);
-    const qrImageUrl = getQrImageUrl(person, origin);
-    const qrPayload = getQrPayload(person);
+    const profileQrImageUrl = getQrImageUrl(person, origin, "profile");
+    const phoneQrImageUrl = getQrImageUrl(person, origin, "phone");
+    const profilePayload = getProfileQrPayload(person, origin);
+    const phonePayload = getPhoneQrPayload(person);
     const rowNumber = i + 2;
 
     const row = sheet.addRow({
@@ -45,27 +50,44 @@ export async function buildStaffExcelWithQr(staff: StaffExportRow[], origin?: st
       email: person.email || "",
       website: person.website || "",
       cardUrl,
-      qrImageUrl
+      profileQrImageUrl,
+      phoneQrImageUrl
     });
 
     row.height = ROW_HEIGHT;
     row.alignment = { vertical: "middle", wrapText: true };
     row.getCell("cardUrl").value = { text: cardUrl, hyperlink: cardUrl };
-    row.getCell("qrImageUrl").value = { text: qrImageUrl, hyperlink: qrImageUrl };
+    row.getCell("profileQrImageUrl").value = { text: profileQrImageUrl, hyperlink: profileQrImageUrl };
+    row.getCell("phoneQrImageUrl").value = { text: phoneQrImageUrl, hyperlink: phoneQrImageUrl };
 
-    const dataUrl = await generateQrDataUrl(qrPayload);
-    const base64 = dataUrl.split(",")[1];
-    const imageId = workbook.addImage({ base64, extension: "png" });
+    const [profileDataUrl, phoneDataUrl] = await Promise.all([
+      generateQrDataUrl(profilePayload),
+      generateQrDataUrl(phonePayload)
+    ]);
 
-    sheet.addImage(imageId, {
-      tl: { col: QR_IMAGE_COLUMN - 1 + 0.15, row: rowNumber - 1 + 0.08 },
+    const profileImageId = workbook.addImage({
+      base64: profileDataUrl.split(",")[1],
+      extension: "png"
+    });
+    const phoneImageId = workbook.addImage({
+      base64: phoneDataUrl.split(",")[1],
+      extension: "png"
+    });
+
+    sheet.addImage(profileImageId, {
+      tl: { col: PROFILE_QR_COLUMN - 1 + 0.12, row: rowNumber - 1 + 0.1 },
+      ext: { width: QR_SIZE, height: QR_SIZE }
+    });
+    sheet.addImage(phoneImageId, {
+      tl: { col: PHONE_QR_COLUMN - 1 + 0.12, row: rowNumber - 1 + 0.1 },
       ext: { width: QR_SIZE, height: QR_SIZE }
     });
   }
 
   sheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return;
-    row.getCell(QR_IMAGE_COLUMN).alignment = { vertical: "middle", horizontal: "center" };
+    row.getCell(PROFILE_QR_COLUMN).alignment = { vertical: "middle", horizontal: "center" };
+    row.getCell(PHONE_QR_COLUMN).alignment = { vertical: "middle", horizontal: "center" };
   });
 
   return workbook.xlsx.writeBuffer();
