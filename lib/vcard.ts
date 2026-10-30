@@ -29,6 +29,22 @@ function splitName(fullName: string) {
   return { family: parts[parts.length - 1], given: parts.slice(0, -1).join(" ") };
 }
 
+/** vCard with name + phone only — matches phone QR / MECARD contact save. */
+export function buildPhoneVcard(staff: { name: string; phone?: string }) {
+  const lines = ["BEGIN:VCARD", "VERSION:3.0"];
+  const { given, family } = splitName(staff.name);
+
+  lines.push(`N:${escapeVcard(family)};${escapeVcard(given)};;;`);
+  lines.push(`FN:${escapeVcard(staff.name)}`);
+
+  if (staff.phone?.trim()) {
+    lines.push(`TEL;TYPE=CELL,VOICE:${escapeVcard(staff.phone.trim())}`);
+  }
+
+  lines.push("END:VCARD");
+  return lines.join("\r\n");
+}
+
 export function buildVcard(staff: VcardStaff) {
   const lines = ["BEGIN:VCARD", "VERSION:3.0"];
   const { given, family } = splitName(staff.name);

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 
 const display = Cormorant_Garamond({
@@ -30,6 +31,42 @@ function formatWebsiteDisplay(url: string) {
 
 function websiteHref(url: string) {
   return url.startsWith("http") ? url : `https://${url}`;
+}
+
+function contactFileName(name: string) {
+  const safe = name.replace(/[^\w\-]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase();
+  return `${safe || "contact"}.vcf`;
+}
+
+async function saveContactFile(contactUrl: string, displayName: string) {
+  const res = await fetch(contactUrl, { credentials: "same-origin" });
+  if (!res.ok) throw new Error("fetch failed");
+
+  const vcardText = await res.text();
+  const filename = contactFileName(displayName);
+  const file = new File([vcardText], filename, { type: "text/vcard" });
+
+  if (typeof navigator !== "undefined" && navigator.share) {
+    try {
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: displayName });
+        return;
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return;
+    }
+  }
+
+  const blob = new Blob([vcardText], { type: "text/vcard;charset=utf-8" });
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = filename;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(objectUrl);
 }
 
 function PhoneIcon() {
@@ -68,8 +105,24 @@ export default function DigitalProfile({
   website,
   contactUrl
 }: DigitalProfileData) {
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const roleLine = title || department;
   const brand = company?.trim() || "GTC Prime";
+
+  async function handleSaveContact() {
+    if (!contactUrl || saving) return;
+    setSaving(true);
+    setSaveError(false);
+    try {
+      await saveContactFile(contactUrl, name);
+    } catch {
+      setSaveError(true);
+      window.location.assign(contactUrl);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   const contacts = [
     phone && { label: "Phone", value: phone, href: `tel:${phone.replace(/\s/g, "")}`, Icon: PhoneIcon },
@@ -121,9 +174,14 @@ export default function DigitalProfile({
             </ul>
 
             {contactUrl && (
-              <a href={contactUrl} className="gtc-save">
-                Save to Contacts
-              </a>
+              <>
+                <button type="button" className="gtc-save" onClick={handleSaveContact} disabled={saving}>
+                  {saving ? "Preparing contact…" : "Save to Contacts"}
+                </button>
+                {saveError && (
+                  <p className="gtc-save-hint">If nothing opened, use your browser menu to open the downloaded contact file.</p>
+                )}
+              </>
             )}
           </div>
         )}
@@ -265,16 +323,32 @@ export default function DigitalProfile({
 
         .gtc-save {
           display: block;
+          width: 100%;
           margin-top: 18px;
           padding: 15px 20px;
           border-radius: 14px;
           text-align: center;
-          text-decoration: none;
           font-size: 15px;
           font-weight: 600;
           color: #fff;
           background: linear-gradient(135deg, #12194a 0%, #1e2868 100%);
           box-shadow: 0 4px 14px rgba(18, 25, 74, 0.35);
+          border: none;
+          cursor: pointer;
+          font-family: inherit;
+        }
+
+        .gtc-save:disabled {
+          opacity: 0.75;
+          cursor: wait;
+        }
+
+        .gtc-save-hint {
+          margin: 10px 4px 0;
+          font-size: 12px;
+          line-height: 1.4;
+          color: #64748b;
+          text-align: center;
         }
 
         .gtc-foot {

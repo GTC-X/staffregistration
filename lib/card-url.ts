@@ -28,10 +28,10 @@ export function getQrImageUrl(
   return variant === "phone" ? `${base}?type=phone` : base;
 }
 
-/** Opens the phone's add-to-contacts screen when scanned from a QR code. */
+/** Phone-only contact file (name + mobile) for Save to Contacts on the profile page. */
 export function getVcardUrl(staff: { _id: string; qrId?: string | null }, origin?: string) {
   const qrKey = getStaffQrKey(staff);
-  return `${appOrigin(origin)}/api/vcard/${qrKey}`;
+  return `${appOrigin(origin)}/api/vcard/${qrKey}?type=phone`;
 }
 
 type QrStaffRef = { _id: string; qrId?: string | null; name?: string; phone?: string };
