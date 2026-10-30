@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
+import { openPhoneContactSave } from "@/lib/open-phone-contact";
 
 const display = Cormorant_Garamond({
   subsets: ["latin"],
@@ -33,11 +34,6 @@ function websiteHref(url: string) {
   return url.startsWith("http") ? url : `https://${url}`;
 }
 
-function contactFileName(name: string) {
-  const safe = name.replace(/[^\w\-]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase();
-  return `${safe || "contact"}.vcf`;
-}
-
 /** Use current site origin so old SSR links to localhost still work on production. */
 function resolveContactSaveUrl(contactUrl: string) {
   if (contactUrl.startsWith("/")) return contactUrl;
@@ -54,38 +50,6 @@ function resolveContactSaveUrl(contactUrl: string) {
   }
 
   return contactUrl;
-}
-
-async function saveContactFile(contactUrl: string, displayName: string) {
-  const saveUrl = resolveContactSaveUrl(contactUrl);
-  const res = await fetch(saveUrl, { credentials: "same-origin" });
-  if (!res.ok) throw new Error("fetch failed");
-
-  const vcardText = await res.text();
-  const filename = contactFileName(displayName);
-  const file = new File([vcardText], filename, { type: "text/vcard" });
-
-  if (typeof navigator !== "undefined" && navigator.share) {
-    try {
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: displayName });
-        return;
-      }
-    } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") return;
-    }
-  }
-
-  const blob = new Blob([vcardText], { type: "text/vcard;charset=utf-8" });
-  const objectUrl = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = objectUrl;
-  link.download = filename;
-  link.style.display = "none";
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(objectUrl);
 }
 
 function PhoneIcon() {
@@ -129,17 +93,23 @@ export default function DigitalProfile({
   const roleLine = title || department;
   const brand = company?.trim() || "GTC Prime";
 
-  async function handleSaveContact() {
-    if (!contactUrl || saving) return;
+  function handleSaveContact() {
+    if (saving || !phone?.trim()) {
+      setSaveError(!phone?.trim());
+      return;
+    }
     setSaving(true);
     setSaveError(false);
     try {
-      await saveContactFile(contactUrl, name);
+      openPhoneContactSave({
+        name,
+        phone,
+        vcardPath: contactUrl ? resolveContactSaveUrl(contactUrl) : undefined
+      });
     } catch {
       setSaveError(true);
-      window.location.assign(resolveContactSaveUrl(contactUrl));
     } finally {
-      setSaving(false);
+      window.setTimeout(() => setSaving(false), 800);
     }
   }
 
@@ -192,13 +162,13 @@ export default function DigitalProfile({
               ))}
             </ul>
 
-            {contactUrl && (
+            {phone?.trim() && (
               <>
                 <button type="button" className="gtc-save" onClick={handleSaveContact} disabled={saving}>
-                  {saving ? "Preparing contact…" : "Save to Contacts"}
+                  {saving ? "Opening contacts…" : "Save to Contacts"}
                 </button>
                 {saveError && (
-                  <p className="gtc-save-hint">If nothing opened, use your browser menu to open the downloaded contact file.</p>
+                  <p className="gtc-save-hint">Add a phone number to this profile, or scan the Phone QR code instead.</p>
                 )}
               </>
             )}

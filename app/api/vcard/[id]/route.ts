@@ -24,11 +24,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       });
 
   const filename = vcardFilename(staff.name);
+  const inline = new URL(req.url).searchParams.get("inline") === "1";
+  const disposition = inline ? "inline" : "attachment";
 
   return new NextResponse(vcard, {
     headers: {
       "Content-Type": "text/vcard; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Content-Disposition": `${disposition}; filename="${filename}"`,
       "Cache-Control": "no-store"
     }
   });
