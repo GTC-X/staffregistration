@@ -22,6 +22,7 @@ export default async function EditStaffPage({ params }: { params: { id: string }
           phone: staff.phone,
           email: staff.email,
           website: staff.website,
+          externalProfileUrl: staff.externalProfileUrl,
           theme: staff.theme
         }}
       />

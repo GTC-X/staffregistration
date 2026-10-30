@@ -10,6 +10,7 @@ export type StaffExportRow = {
   phone?: string;
   email?: string;
   website?: string;
+  externalProfileUrl?: string | null;
 };
 
 export { getStaffQrKey };

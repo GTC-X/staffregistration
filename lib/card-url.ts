@@ -45,17 +45,38 @@ export function getVcardUrl(staff: { _id: string; qrId?: string | null }, origin
   return `${appOrigin(origin)}${getContactSavePath(staff)}`;
 }
 
-type QrStaffRef = { _id: string; qrId?: string | null; name?: string; phone?: string };
+type QrStaffRef = {
+  _id: string;
+  qrId?: string | null;
+  name?: string;
+  phone?: string;
+  externalProfileUrl?: string | null;
+};
+
+export function normalizeExternalProfileUrl(url?: string | null) {
+  const trimmed = url?.trim();
+  if (!trimmed) return null;
+  if (!/^https?:\/\//i.test(trimmed)) return null;
+  return trimmed;
+}
+
+/** Profile link shown in admin / new QR codes (Covve URL when configured). */
+export function getProfileLink(staff: { _id: string; qrId?: string | null; externalProfileUrl?: string | null }, origin?: string) {
+  return normalizeExternalProfileUrl(staff.externalProfileUrl) || getCardUrl(staff, origin);
+}
 
 export function getQrPayloadForVariant(staff: QrStaffRef, variant: QrVariant, origin?: string) {
   if (variant === "profile") {
-    return getCardUrl(staff, origin);
+    return getProfileLink(staff, origin);
   }
   return buildPhoneMecard({ name: staff.name || "", phone: staff.phone });
 }
 
-/** Profile (full detail) QR payload — digital business card URL. */
-export function getProfileQrPayload(staff: { _id: string; qrId?: string | null }, origin?: string) {
+/** Profile (full detail) QR payload — Covve or /card URL. */
+export function getProfileQrPayload(
+  staff: { _id: string; qrId?: string | null; externalProfileUrl?: string | null },
+  origin?: string
+) {
   return getQrPayloadForVariant(staff, "profile", origin);
 }
 

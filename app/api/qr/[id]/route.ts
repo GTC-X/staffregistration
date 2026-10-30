@@ -21,7 +21,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   const variant = qrVariantFromUrl(requestUrl);
   const origin = requestUrl.origin;
   const payload = getQrPayloadForVariant(
-    { _id: String(staff._id), qrId: staff.qrId, name: staff.name, phone: staff.phone },
+    {
+      _id: String(staff._id),
+      qrId: staff.qrId,
+      name: staff.name,
+      phone: staff.phone,
+      externalProfileUrl: staff.externalProfileUrl
+    },
     variant,
     origin
   );

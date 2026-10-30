@@ -11,6 +11,8 @@ export interface StaffDoc {
   phone?: string;
   email?: string;
   website?: string;
+  /** When set, /card/{id} redirects here (e.g. Covve e-card). Printed profile QRs keep working. */
+  externalProfileUrl?: string;
   theme?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -26,6 +28,7 @@ const StaffSchema = new Schema<StaffDoc>(
     phone: { type: String, trim: true },
     email: { type: String, trim: true },
     website: { type: String, trim: true },
+    externalProfileUrl: { type: String, trim: true },
     theme: { type: String, default: "navygold" }
   },
   { timestamps: true }

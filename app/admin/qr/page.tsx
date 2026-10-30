@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import QrCodeImage from "@/components/QrCodeImage";
-import { getCardUrl, getPhoneQrPayload, getProfileQrPayload } from "@/lib/card-url";
+import { getPhoneQrPayload, getProfileLink, getProfileQrPayload } from "@/lib/card-url";
 import { downloadQrPng } from "@/lib/qr";
 
 type Staff = {
@@ -15,6 +15,7 @@ type Staff = {
   department?: string;
   phone?: string;
   website?: string;
+  externalProfileUrl?: string;
 };
 
 export default function QrCodesPage() {
@@ -32,7 +33,7 @@ export default function QrCodesPage() {
   }, []);
 
   async function copyLink(person: Staff) {
-    const url = getCardUrl(person);
+    const url = getProfileLink(person);
     await navigator.clipboard.writeText(url);
     setCopiedId(person._id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -67,7 +68,7 @@ export default function QrCodesPage() {
       ) : (
         <div className="qr-grid">
           {staff.map((s) => {
-            const cardUrl = getCardUrl(s);
+            const profileUrl = getProfileLink(s);
             const profilePayload = getProfileQrPayload(s);
             const phonePayload = getPhoneQrPayload(s);
             const subtitle = [s.title, s.company].filter(Boolean).join(" · ");
@@ -105,13 +106,16 @@ export default function QrCodesPage() {
 
                   <div className="qr-link-row">
                     <span className="qr-link-label">Profile link</span>
-                    <a href={cardUrl} target="_blank" rel="noopener noreferrer" className="qr-link-url" title={cardUrl}>
-                      {cardUrl.replace(/^https?:\/\//, "")}
+                    <a href={profileUrl} target="_blank" rel="noopener noreferrer" className="qr-link-url" title={profileUrl}>
+                      {profileUrl.replace(/^https?:\/\//, "")}
                     </a>
                   </div>
+                  {s.externalProfileUrl && (
+                    <p className="qr-redirect-note">Printed /card/… QRs redirect to this Covve link.</p>
+                  )}
 
                   <div className="qr-actions">
-                    <a href={cardUrl} target="_blank" rel="noopener noreferrer" className="qr-btn qr-btn-primary">
+                    <a href={profileUrl} target="_blank" rel="noopener noreferrer" className="qr-btn qr-btn-primary">
                       Preview card
                     </a>
                     <button type="button" onClick={() => copyLink(s)} className="qr-btn qr-btn-secondary">
@@ -300,6 +304,15 @@ export default function QrCodesPage() {
 
         .qr-link-url:hover {
           text-decoration: underline;
+        }
+
+        .qr-redirect-note {
+          width: 100%;
+          margin: 8px 0 0;
+          font-size: 11px;
+          line-height: 1.4;
+          color: #666;
+          text-align: center;
         }
 
         .qr-actions {

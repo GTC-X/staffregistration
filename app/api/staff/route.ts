@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
     phone: body.phone,
     email: body.email,
     website: body.website,
+    externalProfileUrl: body.externalProfileUrl,
     theme: body.theme || "navygold"
   });
 

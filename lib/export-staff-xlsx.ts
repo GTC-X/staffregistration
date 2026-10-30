@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import { getCardUrl, getPhoneQrPayload, getProfileQrPayload, getQrImageUrl } from "./card-url";
+import { getPhoneQrPayload, getProfileLink, getProfileQrPayload, getQrImageUrl } from "./card-url";
 import { generateQrDataUrl } from "./qr";
 import type { StaffExportRow } from "./export-staff";
 
@@ -34,7 +34,7 @@ export async function buildStaffExcelWithQr(staff: StaffExportRow[], origin?: st
 
   for (let i = 0; i < staff.length; i++) {
     const person = staff[i];
-    const cardUrl = getCardUrl(person, origin);
+    const cardUrl = getProfileLink(person, origin);
     const profileQrImageUrl = getQrImageUrl(person, origin, "profile");
     const phoneQrImageUrl = getQrImageUrl(person, origin, "phone");
     const profilePayload = getProfileQrPayload(person, origin);

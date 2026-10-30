@@ -1,8 +1,8 @@
 import { connectToDatabase } from "@/lib/mongodb";
 import { findStaffByQrOrId } from "@/lib/find-staff";
-import { getContactSavePath } from "@/lib/card-url";
+import { getContactSavePath, normalizeExternalProfileUrl } from "@/lib/card-url";
 import PublicCardView from "@/components/PublicCardView";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
@@ -20,6 +20,11 @@ export default async function PublicCardPage({ params }: { params: { id: string 
   const staff = await findStaffByQrOrId(params.id);
 
   if (!staff) notFound();
+
+  const externalProfile = normalizeExternalProfileUrl(staff.externalProfileUrl);
+  if (externalProfile) {
+    redirect(externalProfile);
+  }
 
   return (
     <PublicCardView

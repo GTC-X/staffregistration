@@ -27,6 +27,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       phone: body.phone,
       email: body.email,
       website: body.website,
+      externalProfileUrl: body.externalProfileUrl,
       theme: body.theme || "navygold"
       // qrId is intentionally omitted — QR codes never change when details are edited
     },

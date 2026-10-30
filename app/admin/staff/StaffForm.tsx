@@ -11,6 +11,7 @@ export type StaffFormValues = {
   phone: string;
   email: string;
   website: string;
+  externalProfileUrl: string;
   theme: string;
 };
 
@@ -37,6 +38,7 @@ export default function StaffForm({
     phone: initial?.phone || "",
     email: initial?.email || "",
     website: initial?.website || "",
+    externalProfileUrl: initial?.externalProfileUrl || "",
     theme: initial?.theme || "navygold"
   });
   const [error, setError] = useState("");
@@ -98,6 +100,17 @@ export default function StaffForm({
       <Field label="Website">
         <input value={values.website} onChange={(e) => update("website", e.target.value)} style={inputStyle} />
       </Field>
+      <Field label="External profile URL (Covve)">
+        <input
+          value={values.externalProfileUrl}
+          onChange={(e) => update("externalProfileUrl", e.target.value)}
+          placeholder="https://ecard.covve.com/..."
+          style={inputStyle}
+        />
+      </Field>
+      <p style={{ margin: "-6px 0 14px", fontSize: 12, color: "#666", lineHeight: 1.45 }}>
+        Full profile QR codes that already point to /card/… will redirect here automatically. No re-print needed.
+      </p>
       <Field label="Card style">
         <select value={values.theme} onChange={(e) => update("theme", e.target.value)} style={inputStyle}>
           {THEMES.map((t) => (
