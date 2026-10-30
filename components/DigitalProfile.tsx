@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
+import QrCodeImage from "@/components/QrCodeImage";
+import { getPhoneQrPayload } from "@/lib/card-url";
 import { openPhoneContactSave } from "@/lib/open-phone-contact";
 
 const display = Cormorant_Garamond({
@@ -90,26 +92,34 @@ export default function DigitalProfile({
 }: DigitalProfileData) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  const [saveHint, setSaveHint] = useState<string | null>(null);
   const roleLine = title || department;
   const brand = company?.trim() || "GTC Prime";
+  const phoneQrPayload = phone?.trim() ? getPhoneQrPayload({ name, phone }) : null;
 
-  function handleSaveContact() {
+  async function handleSaveContact() {
     if (saving || !phone?.trim()) {
       setSaveError(!phone?.trim());
       return;
     }
     setSaving(true);
     setSaveError(false);
+    setSaveHint(null);
     try {
-      openPhoneContactSave({
+      const result = await openPhoneContactSave({
         name,
         phone,
         vcardPath: contactUrl ? resolveContactSaveUrl(contactUrl) : undefined
       });
+      if (result.ok) {
+        setSaveHint(result.hint);
+      } else if (result.reason === "failed") {
+        setSaveError(true);
+      }
     } catch {
       setSaveError(true);
     } finally {
-      window.setTimeout(() => setSaving(false), 800);
+      setSaving(false);
     }
   }
 
@@ -167,8 +177,17 @@ export default function DigitalProfile({
                 <button type="button" className="gtc-save" onClick={handleSaveContact} disabled={saving}>
                   {saving ? "Opening contacts…" : "Save to Contacts"}
                 </button>
+                {saveHint && <p className="gtc-save-hint gtc-save-hint-ok">{saveHint}</p>}
                 {saveError && (
-                  <p className="gtc-save-hint">Add a phone number to this profile, or scan the Phone QR code instead.</p>
+                  <p className="gtc-save-hint">Could not open contacts. Scan the code below with your Camera app instead.</p>
+                )}
+                {phoneQrPayload && (
+                  <div className="gtc-phone-qr">
+                    <p className="gtc-phone-qr-label">Same as Phone QR — scan with Camera</p>
+                    <div className="gtc-phone-qr-frame">
+                      <QrCodeImage url={phoneQrPayload} size={112} alt={`Phone contact QR for ${name}`} />
+                    </div>
+                  </div>
                 )}
               </>
             )}
@@ -335,9 +354,41 @@ export default function DigitalProfile({
         .gtc-save-hint {
           margin: 10px 4px 0;
           font-size: 12px;
-          line-height: 1.4;
+          line-height: 1.45;
           color: #64748b;
           text-align: center;
+        }
+
+        .gtc-save-hint-ok {
+          color: #1e2868;
+          font-weight: 500;
+        }
+
+        .gtc-phone-qr {
+          margin-top: 20px;
+          padding-top: 18px;
+          border-top: 1px solid #eef1f7;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .gtc-phone-qr-label {
+          margin: 0;
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          color: #94a3b8;
+          text-align: center;
+        }
+
+        .gtc-phone-qr-frame {
+          padding: 8px;
+          border-radius: 12px;
+          background: #f8f9fc;
+          border: 1px solid #eef1f7;
         }
 
         .gtc-foot {

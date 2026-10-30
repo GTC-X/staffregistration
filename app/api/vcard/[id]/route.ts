@@ -24,8 +24,10 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       });
 
   const filename = vcardFilename(staff.name);
-  const inline = new URL(req.url).searchParams.get("inline") === "1";
-  const disposition = inline ? "inline" : "attachment";
+  const query = new URL(req.url).searchParams;
+  const inline = query.get("inline") === "1";
+  const forceDownload = query.get("download") === "1";
+  const disposition = inline && !forceDownload ? "inline" : "attachment";
 
   return new NextResponse(vcard, {
     headers: {
