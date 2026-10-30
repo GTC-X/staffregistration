@@ -38,8 +38,27 @@ function contactFileName(name: string) {
   return `${safe || "contact"}.vcf`;
 }
 
+/** Use current site origin so old SSR links to localhost still work on production. */
+function resolveContactSaveUrl(contactUrl: string) {
+  if (contactUrl.startsWith("/")) return contactUrl;
+
+  if (typeof window === "undefined") return contactUrl;
+
+  try {
+    const parsed = new URL(contactUrl);
+    if (parsed.hostname === "localhost" && window.location.hostname !== "localhost") {
+      return `${parsed.pathname}${parsed.search}`;
+    }
+  } catch {
+    /* use as-is */
+  }
+
+  return contactUrl;
+}
+
 async function saveContactFile(contactUrl: string, displayName: string) {
-  const res = await fetch(contactUrl, { credentials: "same-origin" });
+  const saveUrl = resolveContactSaveUrl(contactUrl);
+  const res = await fetch(saveUrl, { credentials: "same-origin" });
   if (!res.ok) throw new Error("fetch failed");
 
   const vcardText = await res.text();
@@ -118,7 +137,7 @@ export default function DigitalProfile({
       await saveContactFile(contactUrl, name);
     } catch {
       setSaveError(true);
-      window.location.assign(contactUrl);
+      window.location.assign(resolveContactSaveUrl(contactUrl));
     } finally {
       setSaving(false);
     }

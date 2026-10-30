@@ -3,13 +3,25 @@ import { buildPhoneMecard } from "./vcard";
 
 export type QrVariant = "profile" | "phone";
 
+function defaultServerOrigin() {
+  const publicUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+  if (publicUrl && !publicUrl.includes("localhost")) return publicUrl;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return publicUrl || "http://localhost:3000";
+}
+
 function appOrigin(origin?: string) {
   return (
     origin ||
     (typeof window !== "undefined" ? window.location.origin : "") ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    "http://localhost:3000"
+    defaultServerOrigin()
   ).replace(/\/$/, "");
+}
+
+/** Same-site path for Save to Contacts — avoids baking localhost into SSR HTML. */
+export function getContactSavePath(staff: { _id: string; qrId?: string | null }) {
+  const qrKey = getStaffQrKey(staff);
+  return `/api/vcard/${qrKey}?type=phone`;
 }
 
 export function getCardUrl(staff: { _id: string; qrId?: string | null }, origin?: string) {
@@ -28,10 +40,9 @@ export function getQrImageUrl(
   return variant === "phone" ? `${base}?type=phone` : base;
 }
 
-/** Phone-only contact file (name + mobile) for Save to Contacts on the profile page. */
+/** Absolute URL for phone-only contact file (exports, emails). Prefer getContactSavePath on the card page. */
 export function getVcardUrl(staff: { _id: string; qrId?: string | null }, origin?: string) {
-  const qrKey = getStaffQrKey(staff);
-  return `${appOrigin(origin)}/api/vcard/${qrKey}?type=phone`;
+  return `${appOrigin(origin)}${getContactSavePath(staff)}`;
 }
 
 type QrStaffRef = { _id: string; qrId?: string | null; name?: string; phone?: string };
